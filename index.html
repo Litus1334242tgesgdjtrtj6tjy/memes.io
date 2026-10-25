@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>memes.io live</title>
+<link rel="icon" href="icons/32.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&family=Ubuntu+Mono:wght@400;700&display=swap">
+<link rel="stylesheet" href="ui/style.css">
+</head>
+<body>
+<canvas id="world" aria-label="Mapa estilo agar.io: cada célula es una memecoin y crece cuando entra smart money o la llama un caller."></canvas>
+
+<div class="hud">
+  <header class="top">
+    <div class="brand">
+      <span class="logo" aria-hidden="true"></span>
+      <div class="brand-text">
+        <h1>memes.io <span class="mode" id="modeBadge">live</span></h1>
+        <p class="stats" id="stats">Cargando el mapa…</p>
+        <div class="chips" id="chips" aria-label="Estado de las fuentes"></div>
+      </div>
+    </div>
+    <div class="toggles">
+      <button type="button" id="tgHosting" aria-label="Configurar servidor real">Servidor en vivo</button>
+      <button type="button" id="tgControls" aria-expanded="false" aria-controls="controls">Ajustes</button>
+      <button type="button" id="tgSide" aria-expanded="false" aria-controls="side">Callers</button>
+    </div>
+    <button type="button" class="theme-toggle" id="themeToggle" aria-pressed="false" aria-label="Activar modo nocturno" title="Cambiar entre modo claro y nocturno"><span class="theme-icon" aria-hidden="true">☾</span><span class="theme-name">Noche</span></button>
+    <div class="controls panel" id="controls">
+      <div class="seg" role="group" aria-label="Datos">
+        <span class="seg-label">Datos</span>
+        <button type="button" data-mode="live" aria-pressed="true">En vivo</button>
+        <button type="button" data-mode="demo" aria-pressed="false">Demo</button>
+      </div>
+      <div class="seg" role="group" aria-label="Tamaño de cada moneda">
+        <span class="seg-label">Tamaño</span>
+        <button type="button" data-size="flow" aria-pressed="true">Entrada neta</button>
+        <button type="button" data-size="held" aria-pressed="false">En posición</button>
+        <button type="button" data-size="wallets" aria-pressed="false">Nº wallets</button>
+        <button type="button" data-size="calls" aria-pressed="false">Callers</button>
+        <button type="button" data-size="organic" aria-pressed="false">Orgánico</button>
+      </div>
+      <div class="seg" role="group" aria-label="Color del borde de cada moneda">
+        <span class="seg-label">Borde</span>
+        <button type="button" data-color="group" aria-pressed="true">Grupos</button>
+        <button type="button" data-color="flow" aria-pressed="false">Flujo</button>
+      </div>
+      <div class="seg" role="group" aria-label="Doble clic en una moneda: dónde se abre para operar">
+        <span class="seg-label">Doble clic</span>
+        <button type="button" data-term="axiom" aria-pressed="true">Axiom</button>
+        <button type="button" data-term="padre" aria-pressed="false">Padre</button>
+      </div>
+      <div class="seg demo-only" role="group" aria-label="Ritmo de la demo" hidden>
+        <span class="seg-label">Ritmo</span>
+        <button type="button" data-speed="0" aria-pressed="false">Pausa</button>
+        <button type="button" data-speed="1" aria-pressed="false">1×</button>
+        <button type="button" data-speed="5" aria-pressed="true">5×</button>
+        <button type="button" data-speed="20" aria-pressed="false">20×</button>
+      </div>
+      <div class="btnrow">
+        <button type="button" class="btn" id="openSources">Fuentes y ajustes</button>
+        <button type="button" class="btn primary" id="dlReport">Informe .json</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="hosting-hint panel" id="hostingHint">GitHub Pages · <b>DEMO</b> (datos simulados). Para datos reales, pulsa «Servidor en vivo» y conecta un backend.</div>
+
+  <div class="left-rail" aria-label="Panel de callers y actividad en directo">
+  <section class="panel side" id="side" aria-label="Callers y grupos">
+    <div class="tabs" role="tablist">
+      <button type="button" role="tab" id="tabCallers" aria-selected="true" aria-controls="paneCallers">Impacto callers<span class="n" id="callerCount"></span></button>
+      <button type="button" role="tab" id="tabGroups" aria-selected="false" aria-controls="paneGroups">Grupos<span class="n" id="groupCount"></span></button>
+    </div>
+    <div class="tabpane" id="paneCallers" role="tabpanel" aria-labelledby="tabCallers">
+      <div class="filters" role="group" aria-label="Qué callers ver">
+        <button type="button" data-cfilter="active" aria-pressed="true">Activos hoy</button>
+        <button type="button" data-cfilter="list" aria-pressed="false">Tu lista</button>
+        <button type="button" data-cfilter="kol" aria-pressed="false">KOLs</button>
+        <button type="button" data-cfilter="all" aria-pressed="false">Todos</button>
+      </div>
+      <ol class="clist" id="callerList"></ol>
+    </div>
+    <div class="tabpane" id="paneGroups" role="tabpanel" aria-labelledby="tabGroups" hidden>
+      <p class="hint">Wallets que compran la misma moneda con menos de 90&nbsp;s de diferencia en 3 monedas distintas o más.</p>
+      <ol class="glist" id="groupList"></ol>
+    </div>
+  </section>
+  <section class="panel feed" aria-labelledby="feedH">
+    <h2 class="panel-h" id="feedH">En directo <span class="feed-hint">· pulsa una moneda para localizarla</span></h2>
+    <ol id="feed"></ol>
+  </section>
+  </div>
+
+  <div class="panel note" id="note" hidden></div>
+
+  <section class="panel board" aria-labelledby="boardH">
+    <h2 id="boardH">Leaderboard</h2>
+    <ol id="board"></ol>
+    <p class="metric" id="metric"></p>
+  </section>
+
+  <p class="help">Pulsa una moneda en «En directo» para marcarla · arrastra para moverte · rueda: zoom · clic: seguir una moneda · doble clic: operarla en <span id="helpTerm">Axiom</span> · Esc: soltar</p>
+
+  <div class="mini">
+    <div class="zoom">
+      <button type="button" id="zin" aria-label="Acercar">+</button>
+      <button type="button" id="zout" aria-label="Alejar">−</button>
+      <button type="button" id="zfit" aria-label="Ver todo el mapa"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 6V2h4M10 2h4v4M14 10v4h-4M6 14H2v-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    </div>
+    <canvas id="mini" class="panel" aria-label="Minimapa: haz clic para ir a esa zona"></canvas>
+  </div>
+</div>
+
+<div class="tip" id="tip" hidden></div>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<dialog class="dlg" id="srcDlg" aria-labelledby="srcH">
+  <header>
+    <h2 id="srcH">Fuentes y ajustes</h2>
+    <button type="button" class="x" id="closeSources" aria-label="Cerrar">✕</button>
+  </header>
+  <section>
+    <h3>De dónde salen los datos</h3>
+    <div id="srcList"></div>
+  </section>
+  <section>
+    <h3>Axiom (Fomo y KOLs)</h3>
+    <p>Axiom ya junta en <b>Smart Money</b> el top PnL de <b>Fomo</b> (con la wallet de Solana verificada), el de KOLs y las <b>tesis de Fomo</b> (sus calls). El servidor externo lo lee a través del <b>complemento opcional</b> de la carpeta companion, con tu sesión y una pestaña de <b>axiom.trade</b> abierta. Solo lee: no compra, no vende y no cambia nada de tu cuenta.</p>
+    <label class="opt"><input type="checkbox" id="optAxiom"><span>Consultar Axiom en segundo plano<small>Rankings Smart Money cada 10 min, tesis de Fomo cada minuto y operaciones smart de las monedas del mapa.</small></span></label>
+    <label class="opt"><input type="checkbox" id="optTracked"><span>Usar mis wallets rastreadas de Axiom como smart money<small>Cuando abres el Wallet Tracker, esas wallets entran en el mapa.</small></span></label>
+  </section>
+  <section>
+    <h3>Callers</h3>
+    <p id="listInfo"></p>
+    <p>El <b>impacto</b> de cada caller (0–100) junta cuatro cosas: <b>alcance</b> (el dinero que entra tras un call suyo, o el tamaño de su comunidad si no se sabe), <b>comunidad</b> (seguidores en pump.fun y Fomo, suscriptores de Telegram y seguidores en X), <b>calidad</b> (2x % y mediana de sus calls, o el % de operaciones que gana) y <b>PnL</b> (su puesto en los rankings de pump.fun, Fomo, Axiom y Kolscan). Pasa el ratón por un caller para ver el desglose.</p>
+    <label class="opt"><input type="checkbox" id="optKolscan"><span>Seguir a los KOLs de Kolscan (Cupsey, Cented…)<small>Unos 560 KOLs con su wallet, X y Telegram, su PnL de 24 h, 7 d y 30 d y sus operaciones en directo.</small></span></label>
+    <label class="opt"><input type="checkbox" id="optKolCalls"><span>Cada compra de un KOL cuenta como un call<small>Su comunidad copia lo que compra. Pesa menos si compra muchas monedas al día; una vez por moneda cada 6 h.</small></span></label>
+    <label class="opt"><input type="checkbox" id="optTelegram"><span>Leer los canales públicos de Telegram de los KOLs<small>Suscriptores (comunidad) y los contratos que publican, que cuentan como calls con las vistas del post.</small></span></label>
+    <label class="opt"><input type="checkbox" id="optCallsAll"><span>Mostrar también callouts de cualquiera con muchos seguidores<small>Por defecto solo cuentan tu lista, el top PnL de pump.fun, Fomo y los KOLs.</small></span></label>
+    <div class="inline">
+      <label class="field">Seguidores mínimos<input type="number" id="optMinFollowers" min="0" step="500" inputmode="numeric"></label>
+    </div>
+  </section>
+  <section>
+    <h3>Subidas orgánicas</h3>
+    <p>Si el market cap de una moneda acelera con <b>muchos compradores distintos</b> (ninguno domina, sin bundles en un mismo bloque, más compras que ventas) y sin smart money ni un call detrás, su burbuja crece con el dinero que entra según la subida. Si además acelera respecto al minuto anterior, cuenta hasta un 50&nbsp;% más. Lleva una 🌱.</p>
+    <label class="opt"><input type="checkbox" id="optOrganic"><span>Hacer crecer las monedas que suben de forma orgánica<small>Se mira el market cap de las monedas del mapa cada minuto y sus últimas operaciones cuando suben.</small></span></label>
+    <label class="opt"><input type="checkbox" id="optOrganicDiscover"><span>Traer al mapa monedas que suben solas<small>Del ranking «movers» de pump.fun, aunque no haya entrado smart money (más exigente: al menos 12 compradores distintos).</small></span></label>
+  </section>
+  <section>
+    <h3>Narrativa con IA (opcional)</h3>
+    <p>Al pasar el ratón por una moneda, Claude resume de qué va según su nombre, su ticker y quién la llama. Usa tu propia clave de API de Anthropic. La clave solo se puede usar con un servidor privado conectado, nunca la pegues en un repositorio GitHub público.</p>
+    <div class="inline">
+      <label class="field">Clave de API de Anthropic<input type="password" id="optAnthropicKey" placeholder="sk-ant-…" autocomplete="off" spellcheck="false"></label>
+      <button type="button" class="btn" id="saveAnthropicKey">Guardar</button>
+    </div>
+    <p class="help" id="keyState"></p>
+  </section>
+  <section>
+    <h3>Tiempo real por RPC (opcional)</h3>
+    <p>Con tu propio RPC de Solana (Helius, QuickNode…) la aplicación escucha en directo a las mejores wallets y ve sus compras al segundo, en cualquier plataforma. La URL del RPC se guarda en el servidor privado.</p>
+    <div class="inline">
+      <label class="field">URL https del RPC<input type="password" id="optRpcUrl" placeholder="https://mainnet.helius-rpc.com/?api-key=…" autocomplete="off" spellcheck="false"></label>
+      <label class="field" style="max-width:110px;flex:0 0 110px">Wallets<input type="number" id="optRpcMax" min="5" max="150" step="5" inputmode="numeric"></label>
+    </div>
+    <label class="opt"><input type="checkbox" id="optRpc"><span>Activar el RPC</span></label>
+  </section>
+  <section>
+    <h3>Informe diario para la IA</h3>
+    <p>Cada día se guarda un .json con las monedas, las wallets smart, los callers, las wallets que compran juntas y las que compran justo antes o después de un call. Trae instrucciones para que la IA lo analice.</p>
+    <div class="btnrow">
+      <button type="button" class="btn primary" data-report="today">Hoy</button>
+      <button type="button" class="btn" data-report="last24h">Últimas 24 h</button>
+      <button type="button" class="btn" id="copyReport">Copiar hoy al portapapeles</button>
+    </div>
+    <div class="reports" id="savedReports"></div>
+  </section>
+  <section>
+    <h3>Diagnóstico</h3>
+    <p>Si algo de Axiom no aparece, copia esto y pásamelo: son los nombres de los campos que devuelve, sin datos tuyos.</p>
+    <details><summary>Formatos de Axiom vistos</summary><pre id="diag"></pre></details>
+    <div class="btnrow" style="margin-top:8px">
+      <button type="button" class="btn" id="copyDiag">Copiar diagnóstico</button>
+      <button type="button" class="btn" id="refreshAll">Actualizar todo ahora</button>
+      <button type="button" class="btn" id="resetData">Borrar datos recogidos</button>
+    </div>
+  </section>
+</dialog>
+
+
+<dialog class="dlg" id="hostingDlg" aria-labelledby="hostingH">
+  <header><h2 id="hostingH">Conectar datos reales</h2><button type="button" class="x" id="closeHosting" aria-label="Cerrar">✕</button></header>
+  <section>
+    <p><b>GitHub Pages aloja el mapa gratis, pero no ejecuta el motor Node.js.</b> Sin un servidor externo, el mapa funciona en DEMO con datos simulados.</p>
+    <p>Si publicas el motor por separado en un alojamiento Node con HTTPS y configuras <code>MEMES_ALLOWED_ORIGIN</code> para tu dominio GitHub Pages, podrás conectar la captura real desde aquí.</p>
+    <label class="field">URL HTTPS del servidor (sin /api)<input type="url" id="hostingUrl" placeholder="https://tu-servidor.ejemplo.com" autocomplete="url" spellcheck="false"></label>
+    <label class="field" style="margin-top:12px">Contraseña del servidor<input type="password" id="hostingPass" placeholder="MEMES_WEB_PASSWORD" autocomplete="off"></label>
+    <p class="hosting-small">La URL se guarda solo en este navegador. La contraseña se mantiene en la sesión del navegador, no se publica en GitHub ni se almacena en archivos del sitio. El servidor debe permitir tu dominio mediante CORS.</p>
+    <div class="btnrow"><button class="btn primary" type="button" id="saveHosting">Guardar y conectar</button><button class="btn" type="button" id="clearHosting">Usar solo DEMO</button></div>
+    <p id="hostingStatus" role="status"></p>
+  </section>
+</dialog>
+<script>window.MEMES_STATIC_SITE = true;</script>
+<script type="module" src="app.js"></script>
+</body>
+</html>
